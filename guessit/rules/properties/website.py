@@ -44,8 +44,13 @@ def website(config):
     safe_prefix = config['safe_prefixes']  # Those words before a tlds are sure
     website_prefixes = config['prefixes']
 
+    # support xxabc.com
     rebulk.regex(r'(?:[^a-z0-9]|^)((?:'+build_or_pattern(safe_subdomains) +
-                 r'\.)+(?:[a-z-0-9-]+\.)+(?:'+build_or_pattern(tlds) +
+                 r'\.)(?:'+build_or_pattern(safe_tlds) +
+                 r'))(?:[^a-z0-9]|$)',
+                 safe_subdomains=safe_subdomains, safe_tlds=safe_tlds, children=True)
+    rebulk.regex(r'(?:[^a-z0-9]|^)((?:'+build_or_pattern(safe_subdomains) +
+                 r'\.)+(?:[a-z0-9-]+\.)+(?:'+build_or_pattern(tlds) +
                  r'))(?:[^a-z0-9]|$)',
                  children=True)
     rebulk.regex(r'(?:[^a-z0-9]|^)((?:'+build_or_pattern(safe_subdomains) +
