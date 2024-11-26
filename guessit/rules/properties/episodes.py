@@ -19,6 +19,7 @@ from ..common.formatters import strip
 from ..common.pattern import is_disabled
 from ..common.validators import seps_surround, int_coercable, and_
 from ...reutils import build_or_pattern
+import cn2an
 
 
 def episodes(config):
@@ -135,6 +136,9 @@ def episodes(config):
         """
         if int_coercable(match.raw):
             return True
+        num = cn2an.cn2an(match.raw,'smart')
+        if int_coercable(num):
+            return True 
         return seps_surround(match)
 
     season_words = config['season_words']
@@ -308,6 +312,13 @@ def episodes(config):
     rebulk.chain(disabled=lambda context: is_disabled(context, 'episode')) \
         .defaults(validator=None) \
         .regex(r'ep-?(?P<episode>\d{1,4})') \
+        .regex(r'v(?P<version>\d+)').repeater('?') \
+        .regex(r'(?P<episodeSeparator>ep|e|x|-)(?P<episode>\d{1,4})', abbreviations=None).repeater('*')
+
+   # ep 一, ep十一, ep一百一十一
+    rebulk.chain(formatter={'episode': parse_numeral}, disabled=lambda context: is_disabled(context, 'episode')) \
+        .defaults(validator=None,formatter={'episode': parse_numeral}) \
+        .regex(r'ep-?(?P<episode>' + numeral + ')') \
         .regex(r'v(?P<version>\d+)').repeater('?') \
         .regex(r'(?P<episodeSeparator>ep|e|x|-)(?P<episode>\d{1,4})', abbreviations=None).repeater('*')
 

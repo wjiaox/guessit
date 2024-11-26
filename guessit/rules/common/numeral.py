@@ -4,6 +4,7 @@
 parse numeral from various formats
 """
 from rebulk.remodule import re
+import cn2an
 
 digital_numeral = r'\d{1,4}'
 
@@ -47,10 +48,19 @@ def __build_word_numeral(*args):
     re_ += ')'
     return re_
 
+# 支持中文
+cn_numeral = r'[一二三四五六七九十百千]{1,7}' # 7位  一千一百一十一
+__cnNumeralPattern = re.compile('^' + cn_numeral + '$')
+
+# 支持中文
+def __parse_cn(value):
+    if not __cnNumeralPattern.search(value):
+        raise ValueError(f'Invalid Roman numeral: {value}')
+    return cn2an.cn2an(value,'smart')
 
 word_numeral = __build_word_numeral(english_word_numeral_list, french_word_numeral_list, french_alt_word_numeral_list)
 
-numeral = '(?:' + digital_numeral + '|' + roman_numeral + '|' + word_numeral + ')'
+numeral = '(?:' + digital_numeral + '|' + cn_numeral + '|' + roman_numeral + '|' + word_numeral + ')'
 
 __romanNumeralMap = (
     ('M', 1000),
@@ -112,7 +122,7 @@ def __parse_word(value):
 _clean_re = re.compile(r'[^\d]*(\d+)[^\d]*')
 
 
-def parse_numeral(value, int_enabled=True, roman_enabled=True, word_enabled=True, clean=True):
+def parse_numeral(value, int_enabled=True, roman_enabled=True, word_enabled=True, clean=True, cn_enable=True):
     """
     Parse a numeric value into integer.
 
@@ -161,5 +171,16 @@ def parse_numeral(value, int_enabled=True, roman_enabled=True, word_enabled=True
                         pass
             return __parse_word(value)  # pragma: no cover
         except ValueError:  # pragma: no cover
+            pass
+    # 支持中文数字解析
+    if cn_enable:
+        try:
+            if clean:
+                try:
+                    num = __parse_cn(value)
+                    return num
+                except ValueError:
+                    pass
+        except ValueError:
             pass
     raise ValueError('Invalid numeral: ' + value)   # pragma: no cover
